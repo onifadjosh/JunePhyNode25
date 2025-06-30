@@ -4,12 +4,14 @@ const ejs = require("ejs");
 const dotenv = require("dotenv");
 dotenv.config();
 const mongoose = require("mongoose");
-const bcrypt = require('bcryptjs');
 app.set("view engine", "ejs");
 const path = require("path");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
-
+const UserModel = require("./models/user.model.js");
+const StudentModel = require("./models/student.model.js");
+const UserRouter = require("./routes/user.routes.js");
+app.use( "/user", UserRouter);
 let URI = process.env.DB_URI;
 
 mongoose
@@ -20,27 +22,6 @@ mongoose
   .catch((err) => {
     console.log(err);
   });
-
-const StudentSchema = mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  course: { type: String, required: true },
-  isAdmin: { type: Boolean, required: false, default: false },
-  dateCreated: { type: String, default: Date.now() },
-});
-
-const StudentModel = mongoose.model("students", StudentSchema);
-
-const UserSchema = mongoose.Schema({
-  firstName: { type: String, required: true },
-  lastName: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  isAdmin: { type: Boolean, required: false, default: false },
-  dateCreated: { type: String, default: Date.now() },
-});
-const UserModel = mongoose.model("Users", UserSchema);
 
 let students = [
   {
@@ -117,68 +98,7 @@ let students = [
 
 let message;
 
-app.get("/", (req, res) => {
-  message = ''
-  res.render("signup", {message});
-});
 
-app.post('/signup', async(req, res)=>{
-  const {firstName, lastName, email, password}= req.body
-  try {
-    let saltRound = 10
-    let salt = await bcrypt.genSalt(saltRound)
-    let hashedPassword = await bcrypt.hash(password, salt)
-    console.log(hashedPassword)
-    let form = await UserModel.create({firstName, lastName, email, password:hashedPassword});
-    students.push(req.body);
-    message = lastName;
-    // res.render('index', {message});
-    res.render('login')
-  } catch (error) {
-    // console.log(error.code)
-
-    if (error.code == 11000) {
-      message = "User already exists";
-      res.render("signup", { message });
-    } else {
-      console.log(error)
-      message = "error adding Student";
-      res.render("signup", { message });
-    }
-  }
-
-})
-
-app.get('/login', (req, res)=>{
-  message = ''
-  res.render('login', {message})
-})
-
-app.post('/login', async(req, res)=>{
-  const{email, password} = req.body
-
-  try {
-    let user = await UserModel.findOne({email})
-    if(!user){
-      message= 'invalid credentials'
-      res.render('login', {message})
-    }else{
-      let isMatch= await bcrypt.compare(password, user.password)
-      if(!isMatch){
-        message= 'invalid credentials'
-      res.render('login', {message})
-      }else{
-
-        message = user.lastName
-        res.render('index', {message})
-      }
-    }
-
-  } catch (error) {
-    message= 'cannot sign you in at this time'
-    res.render('login', {message})
-  }
-})
 
 // app.get(path, callback)
 app.get("/index", (req, res) => {
@@ -202,7 +122,8 @@ app.get("/allStudents", async (req, res) => {
   try {
     let students = await StudentModel.find();
 
-    res.render("allStudents", { students });
+    // res.render("allStudents", { students });
+    res.json(students);
   } catch (e) {
     console.log(e);
     res.render("404");
