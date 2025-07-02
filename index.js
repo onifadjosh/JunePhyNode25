@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
 const ejs = require("ejs");
+const cors = require('cors')
 const dotenv = require("dotenv");
 dotenv.config();
 const mongoose = require("mongoose");
@@ -8,15 +9,16 @@ app.set("view engine", "ejs");
 const path = require("path");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
-const UserModel = require("./models/user.model.js");
-const StudentModel = require("./models/student.model.js");
+app.use(cors());
 const UserRouter = require("./routes/user.routes.js");
+const StudentRouter = require("./routes/student.routes.js");
 app.use( "/user", UserRouter);
+app.use("/students", StudentRouter)
 let URI = process.env.DB_URI;
 
 mongoose
   .connect(URI)
-  .then(() => {
+.then(() => {
     console.log("database connected successfully");
   })
   .catch((err) => {
@@ -118,82 +120,6 @@ app.get("/about", (req, res) => {
   res.render("about", { gender: "male" });
 });
 
-app.get("/allStudents", async (req, res) => {
-  try {
-    let students = await StudentModel.find();
-
-    // res.render("allStudents", { students });
-    res.json(students);
-  } catch (e) {
-    console.log(e);
-    res.render("404");
-  }
-});
-
-app.get("/addStudent", (req, res) => {
-  message = "";
-  res.render("addStudent", { message });
-});
-
-app.post("/addStudent", async (req, res) => {
-  console.log("i am working");
-  console.log(req.body);
-  const { firstName, lastName, email, course } = req.body;
-
-  try {
-    let form = await StudentModel.create(req.body);
-    students.push(req.body);
-    message = "Student added sucessfully";
-    res.render("addStudent", { message });
-  } catch (error) {
-    // console.log(error.code)
-
-    if (error.code == 11000) {
-      message = "Student already exists";
-      res.render("addStudent", { message });
-    } else {
-      message = "error adding Student";
-      res.render("addStudent", { message });
-    }
-  }
-});
-
-app.post("/delete/:id", async (req, res) => {
-  const { id } = req.params;
-  try {
-    let student = await StudentModel.findByIdAndDelete(id);
-    let students = await StudentModel.find();
-
-    res.render("allStudents", { students });
-  } catch (error) {
-    console.log(e);
-    res.render("404");
-  }
-  // console.log(req.params.id)
-  // console.log(id)
-  // students.splice(id, 1);
-});
-
-app.get("/edit/:id", (req, res) => {
-  const { id } = req.params;
-
-  res.render("editStudent", { id });
-});
-
-app.post("/edit/:id", async (req, res) => {
-  const { id } = req.params;
-  const { firstName, lastName, email, course } = req.body;
-  try {
-    // students.splice(id, 1, req.body);
-    let newStudent = await StudentModel.findByIdAndUpdate(id, req.body);
-    let students = await StudentModel.find();
-
-    res.render("allStudents", { students });
-  } catch (error) {
-    console.log(error);
-    res.send({ status: false, message: "error editing student" });
-  }
-});
 
 //to create a server
 // app.listen(port, callback)

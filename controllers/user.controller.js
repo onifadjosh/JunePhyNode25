@@ -4,6 +4,10 @@ app.use(express.urlencoded({ extended: true }));
 const bcrypt = require('bcryptjs')
 const UserModel= require('../models/user.model.js')
 const jwt = require('jsonwebtoken')
+const otpGenerator = require('otp-generator')
+
+
+let OTP = ''
 
 const signUp = async(req, res)=>{
   const {firstName, lastName, email, password}= req.body
@@ -59,6 +63,59 @@ const login = async(req, res)=>{
   }
 }
 
+const requestOtpPage=(req, res)=>{
+  message= ''
+  res.render('requestOtp', {message})
+}
+
+const requestOtp=async(req, res)=>{
+  const{email}= req.body
+  try {
+
+    let user= await UserModel.findOne({email})
+    if(!user){
+      message= 'User doesn not exist'
+      res.render('requestOtp', {message})
+    }else{
+     OTP = otpGenerator.generate(6, { upperCaseAlphabets: false, specialChars: false });
+     console.log(OTP)
+      message='otp sent to mail'
+
+
+      res.redirect(`/user/forgotPass/${email}`)
+
+    }
+    
+  } catch (error) {
+    message= 'error verifying you'
+      res.render('requestOtp', {message})
+  }
+}
+
+const forgotPasswordPage=(req, res)=>{
+  const{email}=req.params
+  res.render('forgotPass', {email})
+}
+
+const forgotPassword=async(req, res)=>{
+  const {email, otp, newPassword} = req.body
+    const{emaill}=req.params
+
+    console.log(email)
+    // console.log(emaill)
+    if(email&& otp==OTP){
+      let user = await UserModel.findOne({email})
+
+     await UserModel.findByIdAndUpdate(user._id, {password:newPassword})
+      message='Password updated successfully'
+      res.render('login', {message})
+    }else{
+      //  message='Password updated successfully'
+      res.render('forgotPass', {email})
+    }
+
+}
+
 const loginPage = (req, res)=>{
   message = ''
   res.render('login', {message})
@@ -74,5 +131,9 @@ module.exports= {
     signUp,
     login,
     loginPage,
-    signupPage
+    signupPage,
+    requestOtp,
+    requestOtpPage,
+    forgotPasswordPage,
+    forgotPassword
 }
