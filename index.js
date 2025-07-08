@@ -9,6 +9,7 @@ app.set("view engine", "ejs");
 const path = require("path");
 app.use(express.static(path.join(__dirname, "public")));
 app.use(express.urlencoded({ extended: true }));
+app.use(express.json())
 app.use(cors());
 const UserRouter = require("./routes/user.routes.js");
 const StudentRouter = require("./routes/student.routes.js");

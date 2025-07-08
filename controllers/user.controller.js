@@ -9,6 +9,28 @@ const otpGenerator = require('otp-generator')
 
 let OTP = ''
 
+const authToken=(req, res, next)=>{
+  let authHeaders = req.headers['authorization']
+
+  const token = authHeaders && authHeaders.split(" ")[1]
+  console.log(token)
+
+  if(!token){
+    message='unauthorized'
+    res.send({message, status:false})
+  }
+
+  jwt.verify(token, process.env.APP_PASS, (err, user)=>{
+    if(err){
+      message='invalid token'
+    res.send({message, status:false})
+    }else{
+      next();
+    }
+  })
+
+}
+
 const signUp = async(req, res)=>{
   const {firstName, lastName, email, password}= req.body
   try {
@@ -17,20 +39,19 @@ const signUp = async(req, res)=>{
     let hashedPassword = await bcrypt.hash(password, salt)
     console.log(hashedPassword)
     let form = await UserModel.create({firstName, lastName, email, password:hashedPassword});
-    students.push(req.body);
     message = lastName;
     // res.render('index', {message});
-    res.render('login')
+    res.json({status:true, firstName, lastName, email})
   } catch (error) {
     // console.log(error.code)
 
     if (error.code == 11000) {
       message = "User already exists";
-      res.render("signup", { message });
+      res.send( {status:false,  message });
     } else {
       console.log(error)
-      message = "error adding Student";
-      res.render("signup", { message });
+      message = "error creating User";
+      res.send( {status:false,  message });
     }
   }
 
@@ -49,17 +70,17 @@ const login = async(req, res)=>{
       let isMatch= await bcrypt.compare(password, user.password)
       if(!isMatch){
         message= 'invalid credentials'
-      res.render('login', {message})
+      res.json( {message, status:false})
       }else{
         let token=  jwt.sign({user:user._id}, process.env.APP_PASS, {expiresIn:'1hr'})
         message = user.lastName
-        res.send( {message, token})
+        res.send( {message, token, status:true})
       }
     }
 
   } catch (error) {
     message= 'cannot sign you in at this time'
-    res.render('login', {message})
+    res.send({message, status:false})
   }
 }
 
@@ -135,5 +156,6 @@ module.exports= {
     requestOtp,
     requestOtpPage,
     forgotPasswordPage,
-    forgotPassword
+    forgotPassword,
+    authToken
 }

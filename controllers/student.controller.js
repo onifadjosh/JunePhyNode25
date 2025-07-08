@@ -1,5 +1,29 @@
 const express = require("express");
 const StudentModel = require("../models/student.model.js");
+const jwt = require('jsonwebtoken')
+
+const authToken=(req, res, next)=>{
+  let authHeaders = req.headers['authorization']
+
+  const token = authHeaders && authHeaders.split(" ")[1]
+  console.log(token)
+
+  if(!token){
+    message='unauthorized'
+    res.send({message, status:false})
+  }
+
+  jwt.verify(token, process.env.APP_PASS, (err, user)=>{
+    if(err){
+      message='invalid token'
+    res.send({message, status:false})
+    }else{
+      next();
+    }
+  })
+
+}
+
 
 const getAllStudentsPage = async (req, res) => {
   try {
@@ -85,4 +109,5 @@ module.exports = {
   deleteStudent,
   editStudentPage,
   editStudent,
+  authToken
 };

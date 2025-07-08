@@ -1,7 +1,8 @@
 const express = require('express');
 const { getAllStudentsPage, getAddStudentPage, addStudent, deleteStudent, editStudentPage, editStudent } = require('../controllers/student.controller');
+const { authToken } = require('../controllers/user.controller');
 const router = express.Router()
-router.get("/allStudents", getAllStudentsPage);
+router.get("/allStudents",authToken,  getAllStudentsPage);
 
 router.get("/addStudent", getAddStudentPage);
 
