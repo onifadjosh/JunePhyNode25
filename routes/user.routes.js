@@ -1,7 +1,7 @@
 const express= require('express')
 const router = express.Router()
 const UserModel = require('../models/user.model.js')
-const { signUp, login, loginPage, signupPage, requestOtp, requestOtpPage, forgotPasswordPage, forgotPassword, authToken } = require('../controllers/user.controller.js')
+const { signUp, login, loginPage, signupPage, requestOtp, requestOtpPage, forgotPasswordPage, forgotPassword, authToken, resolveAccount } = require('../controllers/user.controller.js')
 router.post('/signup', signUp)
 
 router.get('/login', loginPage)
@@ -13,5 +13,6 @@ router.post("/requestOtp",requestOtp);
 router.get('/requestOtp', requestOtpPage)
 router.get('/forgotPass/:email', forgotPasswordPage)
 router.post('/forgotPass/:email', forgotPassword)
+router.post('/resolveAccount', authToken, resolveAccount )
 
 module.exports = router
