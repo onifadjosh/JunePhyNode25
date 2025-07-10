@@ -14,4 +14,4 @@ router.get("/edit/:id", editStudentPage);
 
 router.post("/edit/:id", editStudent);
 
-module.exports= router
+module.exports= router;
